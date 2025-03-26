@@ -1,13 +1,14 @@
 pipeline {
     agent {
         docker {
-            image 'python:3.11' // Use Python Docker image for building
+            image 'python:3.11' // Run Python in Docker
         }
     }
 
     environment {
         GITHUB_REPO = 'https://github.com/Nivedit84/Python-Demo-Project'
         DOCKER_CONTAINER_NAME = 'my_python_app'
+        APP_PORT = '5000' // Port your app uses
     }
 
     stages {
@@ -19,9 +20,9 @@ pipeline {
             }
         }
 
-        stage('Create Docker Image') {
+        stage('Build Docker Image') {
             steps {
-                sh 'docker build -t my_python_app .' // Build Docker image
+                sh 'docker build -t my_python_app .'
             }
         }
 
@@ -36,11 +37,11 @@ pipeline {
             }
         }
 
-        stage('Deploy to EC2') {
+        stage('Run New Container') {
             steps {
                 script {
                     sh '''
-                    docker run -d --name ${DOCKER_CONTAINER_NAME} -p 5000:5000 my_python_app
+                    docker run -d --name ${DOCKER_CONTAINER_NAME} -p 5000:${APP_PORT} my_python_app
                     '''
                 }
             }
