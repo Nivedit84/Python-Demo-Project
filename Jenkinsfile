@@ -1,53 +1,49 @@
 pipeline {
-agent any
+    agent {
+        docker {
+            image 'python:3.11' // Use Python Docker image for building
+        }
+    }
 
-environment {
-SSH_CRED_ID = 'your-ssh-credential-id' // Jenkins Credential ID
-EC2_IP = 'your-ec2-public-ip'
-PROJECT_DIR = '/home/ec2-user/my-python-app'
-}
+    environment {
+        GITHUB_REPO = 'https://github.com/Nivedit84/Python-Demo-Project'
+        DOCKER_CONTAINER_NAME = 'my_python_app'
+    }
 
-stages {
-stage('Clone Repository') {
-steps {
-git branch: 'main', url: 'git@github.com:your-username/your-repo.git'
-}
-}
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: 'main',
+                    credentialsId: 'github-token',
+                    url: "${GITHUB_REPO}"
+            }
+        }
 
-stage('Install Dependencies') {
-steps {
-sh 'pip3 install -r requirements.txt'
-}
-}
+        stage('Create Docker Image') {
+            steps {
+                sh 'docker build -t my_python_app .' // Build Docker image
+            }
+        }
 
-stage('Deploy to EC2') {
-steps {
-sshagent(credentials: [SSH_CRED_ID]) {
-sh """
-ssh -o StrictHostKeyChecking=no ec2-user@${EC2_IP} << 'EOF'
-# Stop running app if exists
-pkill -f my_app.py || true
-# Remove old files
-rm -rf ${PROJECT_DIR}
-# Create project directory
-mkdir -p ${PROJECT_DIR}
-exit
-EOF
-"""
-// Copy new files to EC2
-sh """
-scp -o StrictHostKeyChecking=no -r * ec2-user@${EC2_IP}:${PROJECT_DIR}/
-"""
-// Restart the application
-sh """
-ssh -o StrictHostKeyChecking=no ec2-user@${EC2_IP} << 'EOF'
-# Start the application
-nohup python3 ${PROJECT_DIR}/my_app.py > app.log 2>&1 &
-exit
-EOF
-"""
-}
-}
-}
-}
+        stage('Stop Old Container') {
+            steps {
+                script {
+                    sh '''
+                    docker stop ${DOCKER_CONTAINER_NAME} || true
+                    docker rm ${DOCKER_CONTAINER_NAME} || true
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to EC2') {
+            steps {
+                script {
+                    sh '''
+                    docker run -d --name ${DOCKER_CONTAINER_NAME} -p 5000:5000 my_python_app
+                    '''
+                }
+            }
+        }
+    }
 }
