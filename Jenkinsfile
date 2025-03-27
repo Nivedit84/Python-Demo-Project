@@ -16,7 +16,14 @@ pipeline {
             agent {
                 docker {
                     image 'python:3.9'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock'
                 }
+            }
+            steps {
+                sh '''
+                pip install -r requirements.txt
+                python -m unittest discover
+                '''
             }
         }
 
