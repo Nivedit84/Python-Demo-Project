@@ -1,15 +1,10 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.9'
-        }
-    }
-    
+    agent any
     environment {
         DOCKER_CONTAINER_NAME = 'python-app'
         DOCKER_IMAGE = 'my-python-app'
     }
-    
+
     stages {
         stage('Clone Repository') {
             steps {
@@ -17,7 +12,15 @@ pipeline {
             }
         }
 
-    stage('Build Docker Image') {
+        stage('Run Inside Docker') {
+            agent {
+                docker {
+                    image 'python:3.9'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
             steps {
                 sh '''
                 docker build -t $DOCKER_IMAGE .
@@ -25,7 +28,7 @@ pipeline {
             }
         }
 
-    stage('Run Docker Container') {
+        stage('Run Docker Container') {
             steps {
                 sh '''
                 docker stop $DOCKER_CONTAINER_NAME || true
