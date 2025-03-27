@@ -1,49 +1,37 @@
 pipeline {
     agent {
         docker {
-            image 'python:3.11' // Run Python in Docker
+            image 'python:3.9'
         }
     }
-
+    
     environment {
-        GITHUB_REPO = 'https://github.com/Nivedit84/Python-Demo-Project'
-        DOCKER_CONTAINER_NAME = 'my_python_app'
-        APP_PORT = '5000' // Port your app uses
+        DOCKER_CONTAINER_NAME = 'python-app'
+        DOCKER_IMAGE = 'my-python-app'
     }
-
+    
     stages {
         stage('Clone Repository') {
             steps {
-                git branch: 'main',
-                    credentialsId: 'github-token',
-                    url: "${GITHUB_REPO}"
+                git branch: 'main', url: 'https://github.com/Nivedit84/Python-Demo-Project.git'
             }
         }
 
-        stage('Build Docker Image') {
+    stage('Build Docker Image') {
             steps {
-                sh 'docker build -t my_python_app .'
+                sh '''
+                docker build -t $DOCKER_IMAGE .
+                '''
             }
         }
 
-        stage('Stop Old Container') {
+    stage('Run Docker Container') {
             steps {
-                script {
-                    sh '''
-                    docker stop ${DOCKER_CONTAINER_NAME} || true
-                    docker rm ${DOCKER_CONTAINER_NAME} || true
-                    '''
-                }
-            }
-        }
-
-        stage('Run New Container') {
-            steps {
-                script {
-                    sh '''
-                    docker run -d --name ${DOCKER_CONTAINER_NAME} -p 5000:${APP_PORT} my_python_app
-                    '''
-                }
+                sh '''
+                docker stop $DOCKER_CONTAINER_NAME || true
+                docker rm $DOCKER_CONTAINER_NAME || true
+                docker run -d --name $DOCKER_CONTAINER_NAME -p 5000:5000 $DOCKER_IMAGE
+                '''
             }
         }
     }
