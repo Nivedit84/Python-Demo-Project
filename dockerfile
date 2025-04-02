@@ -1,11 +1,14 @@
-# Use Python 3.9 as the base image
+# Use official Python image
 FROM python:3.9
 
-# Set the working directory inside the container
+# Set working directory
 WORKDIR /app
 
-# Copy project files to the container
+# Copy project files into the container
 COPY . /app
 
-# Run the Python script when the container starts
-CMD ["python", "demo.py"]  # Change "app.py" to your actual script name
+# Install dependencies
+RUN pip install flask
+
+# Run the Flask app
+CMD ["python", "app.py"]

@@ -1,25 +1,33 @@
-node {
-    stage('Clone Repository') {
-        git branch: 'main', url: 'https://github.com/Nivedit84/Python-Demo-Project.git'
+pipeline {
+    agent any
+
+    triggers {
+        githubPush()  // Trigger pipeline on GitHub push (via webhook)
     }
 
-    stage('Build Docker Image') {
-        sh '''
-        docker build -t my-python-app .
-        '''
-    }
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Nivedit84/Python-Demo-Project.git'
+            }
+        }
 
-    stage('Run Docker Container') {
-        sh '''
-        docker stop python-app || true
-        docker rm python-app || true
-        docker run -d --name python-app -p 5000:5000 my-python-app
-        '''
-    }
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t my-flask-app .'
+            }
+        }
 
-    stage('Check Logs') { 
-        sh 'docker ps -a'
-        sh 'docker logs python-app'
+        stage('Run Flask App') {
+            steps {
+                // Stop and remove old container if running
+                sh 'docker stop flask-app || true'
+                sh 'docker rm flask-app || true'
+                
+                // Run new container
+                sh 'docker run -d --name flask-app -p 5000:5000 my-flask-app'
+            }
+        }
     }
 }
 
