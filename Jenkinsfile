@@ -16,4 +16,10 @@ node {
         docker run -d --name python-app -p 5000:5000 my-python-app
         '''
     }
+
+    stage('Check Logs') { 
+        sh 'docker ps -a'
+        sh 'docker logs python-app'
+    }
 }
+
