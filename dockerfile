@@ -8,4 +8,4 @@ WORKDIR /app
 COPY . /app
 
 # Run the Python script when the container starts
-CMD ["python", "app.py"]  # Change "app.py" to your actual script name
+CMD ["python", "demo.py"]  # Change "app.py" to your actual script name
